@@ -30,6 +30,16 @@ void addtoHistory(const char *cmd){
     }
 }
 
+void printHistory(int offset){
+  if(offset < 0 || offset >= history_count){
+    fprintf(stderr, "history: invalid offset\n");
+    return;
+  }
+  for(int i = 0; i < history_count; i++){
+    printf("%d: %s\n", i, history[i]);
+  }
+}
+
 
 int main(int argc, char *argv[]) {
     // Define the required variables
@@ -77,8 +87,12 @@ int main(int argc, char *argv[]) {
             clearHistory();
             continue;
         } 
-        // checks for history [offset], executes the command in history at the given offset.
+        // checks for history [offset], executes the command in history at the given offset. to check for offset we probably check if the second token is a number(is there an easier way to do this)
         // prints error message if offset is not valid
+        if(strcmp(token, "history") == 0 && strcmp(strtok(NULL, delimitor), "1") == 0){
+          int offset = atoi(strtok(NULL, delimiter));
+          printHistory(offset);
+        }
         
         // check for history, if history print history
         else if (strcmp(token, "history") == 0) {
