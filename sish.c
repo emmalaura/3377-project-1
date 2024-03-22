@@ -13,6 +13,28 @@
 
 char history[MAX_HISTORY][MAX_CMD_ARGUMENTS];
 int history_count = 0;
+int front = -1; rear = -1;
+int isFull = 0;
+
+int isFull(){
+  if ((front == rear + 1) || (front == 0 && rear == SIZE - 1)) return 1;
+  return 0;
+}
+
+int isEmpty(){
+    if(front == -1){
+        return 1;
+    }
+    return 0;
+}
+
+void enQueue(char *cmd){
+  if(isFull()){
+    front = (front + 1) % MAX_HISTORY;
+  }
+  rear = (rear + 1) % MAX_HISTORY;
+  addtoHistory(cmd);
+}
 
 void clearHistory(){
     history_count = 0;
@@ -22,11 +44,9 @@ void addtoHistory(const char *cmd){
     if (history_count < MAX_HISTORY) {
         strcpy(history[history_count], cmd);
         history_count++;
-    } else {
-        for (int i = 0; i < MAX_HISTORY - 1; i++) {
-            strcpy(history[i], history[i + 1]);
-        }
-        strcpy(history[MAX_HISTORY - 1], cmd);
+    }else {
+      strcpy(history[rear], cmd);
+      history_count++;
     }
 }
 
