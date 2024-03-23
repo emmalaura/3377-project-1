@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <errno.h>
+
+#define MAX_CMD_ARGUMENTS 1024
+#define PROMPT "sish> "
+
+int main(int argc, char *argv[]) {
+    // Define the required variables
+    char *line = NULL;
+    char *token;
+    char *delimiter = " ";
+    size_t len = 0;
+    ssize_t read;
+
+    while (1) {
+        // display prompt when waiting for input
+        printf("%s", PROMPT);
+        if ((read = getline(&line, &len, stdin)) == -1) {
+            printf("Error reading prompt\n");
+            break;
+        }
+       
+        // Tokenize input, to read line from stdin one at a time
+        char *saveptr1;
+        char *input_token = strtok_r(line, delimiter, &saveptr1);
+
+        // checks for exit, if user enters exit, the shell will exit
+        if (strcmp(input_token, "exit") == 0) {
+            printf("Exiting\n");
+            break;
+        }
+
+        // check for cd
+        if (strcmp(input_token, "cd") == 0) {
+            // get the next token (directory to change to)
+            char *subtoken = strtok_r(NULL, delimiter, &saveptr1);
+            // if the token is not null, change to the directory provided by user
+            if (subtoken != NULL) {
+                if (chdir(subtoken) != 0) {
+                    perror("cd");
+                }
+                // if chdir fails, print error message
+            } else {
+                fprintf(stderr, "cd failed: missing directory\n");
+            }
+            continue;
+        }
+
+        // Shell should execute the commands
+        pid_t pid = fork();
+        // if execution fails
+        if (pid == -1) {
+            perror("fork");
+            exit(EXIT_FAILURE);
+        } else if (pid == 0) {
+            // Child process
+            char *args[MAX_CMD_ARGUMENTS];
+            int i = 0;
+            args[i++] = input_token;
+            while ((token = strtok_r(NULL, delimiter, &saveptr1)) != NULL) {
+                args[i++] = token;
+                }
+            args[i] = NULL;
+            execvp(args[0], args);
+            // If execvp fails, perror and exit
+            perror("execvp");
+            exit(EXIT_FAILURE);
+        } else {
+            // Parent process
+            wait(NULL); // Wait for the child process to finish
+        }
+    }
+
+    free(line);
+    exit(EXIT_SUCCESS);
+}
