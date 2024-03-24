@@ -6,6 +6,7 @@
 #include <errno.h>
 
 #define MAX_CMD_ARGUMENTS 1024
+#define MAX_HISTORY 100
 #define PROMPT "sish> "
 
 int main(int argc, char *argv[]) {
@@ -22,6 +23,11 @@ int main(int argc, char *argv[]) {
         if ((read = getline(&line, &len, stdin)) == -1) {
             printf("Error reading prompt\n");
             break;
+        }
+
+        // Trim newline character
+        if (line[read - 1] == '\n') {
+            line[read - 1] = '\0';
         }
        
         // Tokenize input, to read line from stdin one at a time
@@ -49,7 +55,6 @@ int main(int argc, char *argv[]) {
             }
             continue;
         }
-
         // Shell should execute the commands
         pid_t pid = fork();
         // if execution fails
@@ -66,7 +71,6 @@ int main(int argc, char *argv[]) {
                 }
             args[i] = NULL;
             execvp(args[0], args);
-            // If execvp fails, perror and exit
             perror("execvp");
             exit(EXIT_FAILURE);
         } else {
