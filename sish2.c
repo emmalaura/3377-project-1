@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <ctype.h>
 
 #define MAX_CMD_ARGUMENTS 1024
 #define MAX_HISTORY 100 
@@ -51,6 +52,7 @@ void clearHistory(){
     memset(history[i], 0, MAX_CMD_ARGUMENTS);
   }
   history_count = 0;
+  printf("History cleared\n");
 }
 
 void printHistoryOffset(int offset){
@@ -119,9 +121,23 @@ int main(int argc, char *argv[]) {
       else if(strcmp(subtoken, "-c") == 0){
         clearHistory();
       }else{
-        printHistoryOffset(atoi(subtoken));
+        int offset = atoi(subtoken);
+        if(offset == 0)
+        {
+          offset = (history_count - 1) % MAX_HISTORY;
+          if(offset < 0){
+            fprintf(stderr, "No commands in history.\n");
+          }
+          else{
+            printHistoryOffset(offset);
+          }
+        }
+        else{
+          fprintf(stderr, "Invalid offset\n");
+        }
       }
-    }
+      continue;
+  }
 
 
     // Shell should execute the commands
@@ -151,3 +167,4 @@ int main(int argc, char *argv[]) {
     free(line);
     exit(EXIT_SUCCESS);
 }
+
