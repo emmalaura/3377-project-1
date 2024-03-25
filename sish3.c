@@ -178,10 +178,8 @@ int checkPipe(char *line){
 
 int main(int argc, char *argv[]) {
   // Define the required variables
-  char *token;
+  char *token = NULL;
   char *delimiter = " ";
-  size_t len = 0;
-  ssize_t read;
   char line[BUFFER_SIZE];
   char **argv_ptr = NULL;
   char **commands[MAX_CMD_ARGUMENTS];
