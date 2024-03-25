@@ -53,13 +53,37 @@ void clearHistory(){
   history_count = 0;
 }
 
-void printHistoryOffset(int offset){
+char* printHistoryOffset(int offset){
   int i = front;
   if(history_count >= MAX_HISTORY){
-    printf("%s\n", history[i + offset]);
+    return history[i + offset % MAX_HISTORY];
   }else{
-    printf("%s\n", history[offset]);
+    return history[offset % history_count];
   }
+}
+
+void executeCommand(char *input_token, char *saveptr1, char *delimiter, char *token){
+    pid_t pid = fork();
+    // if execution fails
+    if (pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) {
+        // Child process
+        char *args[MAX_CMD_ARGUMENTS];
+        int i = 0;
+        args[i++] = input_token;
+        while ((token = strtok_r(NULL, delimiter, &saveptr1)) != NULL) {
+            args[i++] = token;
+            }
+        args[i] = NULL;
+        execvp(args[0], args);
+        perror("execvp");
+        exit(EXIT_FAILURE);
+    } else {
+        // Parent process
+        wait(NULL); // Wait for the child process to finish
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -93,7 +117,6 @@ int main(int argc, char *argv[]) {
       printf("Exiting\n");
       break;
   }
-
   addtoHistory(line);
   // check for cd
   if (strcmp(input_token, "cd") == 0) {
@@ -109,9 +132,7 @@ int main(int argc, char *argv[]) {
           fprintf(stderr, "cd failed: missing directory\n");
       }
       continue;
-  }
-
-  if(strcmp(input_token, "history") == 0){
+  } else if(strcmp(input_token, "history") == 0){
       char *subtoken = strtok_r(NULL, delimiter, &saveptr1);
       if(subtoken == NULL){
         printHistory();
@@ -119,32 +140,12 @@ int main(int argc, char *argv[]) {
       else if(strcmp(subtoken, "-c") == 0){
         clearHistory();
       }else{
-        printHistoryOffset(atoi(subtoken));
+        char* offsetCmd = printHistoryOffset(atoi(subtoken));
+        executeCommand(offsetCmd, saveptr1, delimiter, token);
       }
-    }
-
-
-    // Shell should execute the commands
-    pid_t pid = fork();
-    // if execution fails
-    if (pid == -1) {
-        perror("fork");
-        exit(EXIT_FAILURE);
-    } else if (pid == 0) {
-        // Child process
-        char *args[MAX_CMD_ARGUMENTS];
-        int i = 0;
-        args[i++] = input_token;
-        while ((token = strtok_r(NULL, delimiter, &saveptr1)) != NULL) {
-            args[i++] = token;
-            }
-        args[i] = NULL;
-        execvp(args[0], args);
-        perror("execvp");
-        exit(EXIT_FAILURE);
     } else {
-        // Parent process
-        wait(NULL); // Wait for the child process to finish
+    // Shell should execute the commands
+    executeCommand(input_token, saveptr1, delimiter, token);
     }
   }
 
