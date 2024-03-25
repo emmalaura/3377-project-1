@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <ctype.h>
 
 #define MAX_CMD_ARGUMENTS 1024
 #define MAX_HISTORY 100 
@@ -51,6 +52,7 @@ void clearHistory(){
     memset(history[i], 0, MAX_CMD_ARGUMENTS);
   }
   history_count = 0;
+  printf("History cleared\n");
 }
 
 char* printHistoryOffset(int offset){
@@ -140,9 +142,49 @@ int main(int argc, char *argv[]) {
       else if(strcmp(subtoken, "-c") == 0){
         clearHistory();
       }else{
+<<<<<<< HEAD
         char* offsetCmd = printHistoryOffset(atoi(subtoken));
         executeCommand(offsetCmd, saveptr1, delimiter, token);
       }
+=======
+        int offset = atoi(subtoken);
+        if(offset == 0)
+        {
+          offset = (history_count - 1) % MAX_HISTORY;
+          if(offset < 0){
+            fprintf(stderr, "No commands in history.\n");
+          }
+          else{
+            printHistoryOffset(offset);
+          }
+        }
+        else{
+          fprintf(stderr, "Invalid offset\n");
+        }
+      }
+      continue;
+  }
+
+
+    // Shell should execute the commands
+    pid_t pid = fork();
+    // if execution fails
+    if (pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) {
+        // Child process
+        char *args[MAX_CMD_ARGUMENTS];
+        int i = 0;
+        args[i++] = input_token;
+        while ((token = strtok_r(NULL, delimiter, &saveptr1)) != NULL) {
+            args[i++] = token;
+            }
+        args[i] = NULL;
+        execvp(args[0], args);
+        perror("execvp");
+        exit(EXIT_FAILURE);
+>>>>>>> f80c96884b4746375177790ebf3196badce612a1
     } else {
     // Shell should execute the commands
     executeCommand(input_token, saveptr1, delimiter, token);
@@ -152,3 +194,4 @@ int main(int argc, char *argv[]) {
     free(line);
     exit(EXIT_SUCCESS);
 }
+
